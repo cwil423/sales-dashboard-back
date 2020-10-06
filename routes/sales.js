@@ -1,6 +1,6 @@
 const express = require('express');
-const pool = require('../db');
 const axios = require('axios');
+const pool = require('../db');
 
 const router = express.Router();
 
@@ -52,7 +52,7 @@ router.get('/invoice', (req, res) => {
 
 router.post('/customers', async (req, res) => {
   try {
-    let letters = req.body.letters;
+    let { letters } = req.body;
     letters = letters.charAt(0).toUpperCase();
 
     const customers = await pool.query(
@@ -66,7 +66,7 @@ router.post('/customers', async (req, res) => {
 
 router.post('/salespeople', async (req, res) => {
   try {
-    let letters = req.body.letters;
+    let { letters } = req.body;
     letters = letters.charAt(0).toUpperCase();
 
     const salespeople = await pool.query(

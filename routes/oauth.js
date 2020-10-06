@@ -56,10 +56,10 @@ router.get('/callback', (req, res) => {
         { value: authResponse.token.access_token }
       ).catch((err) => console.log(err));
       res.sendFile(dirPath);
-      console.log('The Token is  ' + JSON.stringify(authResponse.getJson()));
+      console.log(`The Token is ${JSON.stringify(authResponse.getJson())}`);
     })
     .catch(function (e) {
-      console.error('The error message is :' + e.originalMessage);
+      console.error(`The error message is :${e.originalMessage}`);
       console.error(e.intuit_tid);
     });
 });
