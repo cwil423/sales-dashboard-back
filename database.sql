@@ -8,7 +8,7 @@ INSERT INTO salespeople (
 first_name,
 last_name
 )
-VALUES ('Andrew', 'Prince');
+VALUES ('Todd', 'Williamson');
 
 CREATE TABLE sales (
 id SERIAL PRIMARY KEY,
@@ -31,10 +31,10 @@ INSERT INTO sales (
 VALUES('Cole', 'Williamson');
 
 INSERT INTO customers (first_name, last_name)
-VALUES('John', 'Doe');
+VALUES('Jim', 'Doe');
 
 INSERT INTO products (product_name, price)
-VALUES ('Basic filter', 10)
+VALUES ('Basic filter', 10);
 
 ALTER TABLE sales
 ADD COLUMN service_date DATE;
@@ -47,3 +47,6 @@ id SERIAL PRIMARY KEY,
 product_name VARCHAR(255) NOT NULL,
 price INT NOT NULL
 );
+
+INSERT INTO customers (first_name, last_name)
+VALUES ('Robert', 'Williamson');

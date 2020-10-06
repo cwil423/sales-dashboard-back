@@ -6,14 +6,21 @@ require('dotenv').config();
 
 const router = express.Router();
 
-mongoose.connect(process.env.mongoURI, {useNewUrlParser: true, useUnifiedTopology: true});
+mongoose.connect(process.env.mongoURI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
 
 const accessTokenSchema = new mongoose.Schema({
   name: String,
-  value: String
+  value: String,
 });
 
-const AccessToken = mongoose.model('accessToken', accessTokenSchema, 'accessToken');
+const AccessToken = mongoose.model(
+  'accessToken',
+  accessTokenSchema,
+  'accessToken'
+);
 
 // Instance of client
 const oauthClient = new OAuthClient({
@@ -24,29 +31,31 @@ const oauthClient = new OAuthClient({
 });
 
 router.get('/', (req, res) => {
-  
   // AuthorizationUri
   const authURI = oauthClient.authorizeUri({
     scope: [OAuthClient.scopes.Accounting, OAuthClient.scopes.OpenId],
     state: 'testState',
   });
-  
+
   // Redirect the authUri
-  res.redirect(authURI);      
-})
+  res.redirect(authURI);
+});
 
 router.get('/callback', (req, res) => {
-  const dirPath = path.join(__dirname, '../index.html')
+  const dirPath = path.join(__dirname, '../index.html');
 
   // Parse the redirect URL for authCode and exchange them for tokens
   const parseRedirect = req.url;
- 
+
   // Exchange the auth code retrieved from the **req.url** on the redirectUri
   oauthClient
     .createToken(parseRedirect)
     .then(function (authResponse) {
-      AccessToken.updateOne({name: "accessToken"}, {value: authResponse.token.access_token}).catch(err => console.log(err));
-      res.sendFile(dirPath)
+      AccessToken.updateOne(
+        { name: 'accessToken' },
+        { value: authResponse.token.access_token }
+      ).catch((err) => console.log(err));
+      res.sendFile(dirPath);
       console.log('The Token is  ' + JSON.stringify(authResponse.getJson()));
     })
     .catch(function (e) {
@@ -56,8 +65,7 @@ router.get('/callback', (req, res) => {
 });
 
 router.get('/accessToken', (req, res) => {
-  AccessToken.find()
-    .then(response => res.send(response))
+  AccessToken.find().then((response) => res.send(response));
 });
 
 module.exports = router;
