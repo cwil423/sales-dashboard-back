@@ -78,4 +78,18 @@ router.post('/salespeople', async (req, res) => {
   }
 });
 
+router.post('/products', async (req, res) => {
+  try {
+    let { letters } = req.body;
+    letters = letters.charAt(0).toUpperCase();
+
+    const products = await pool.query(
+      `SELECT * FROM products WHERE product_name LIKE '${letters}%';`
+    );
+    res.send(products.rows);
+  } catch (error) {
+    console.log(error);
+  }
+});
+
 module.exports = router;
