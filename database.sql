@@ -42,10 +42,14 @@ ADD COLUMN service_date DATE;
 ALTER TABLE sales
 ALTER COLUMN service_date SET NOT NULL;
 
-CREATE TABLE products (
+CREATE TABLE sales (
 id SERIAL PRIMARY KEY,
-product_name VARCHAR(255) NOT NULL,
-price INT NOT NULL
+customer_id INT REFERENCES customers (id) NOT NULL,
+salesperson_id INT REFERENCES salespeople (id) NOT NULL,
+product_id INT REFERENCES products (id) NOT NULL,
+price INT NOT NULL,
+quantity INT NOT NULL,
+service_date DATE NOT NULL
 );
 
 INSERT INTO customers (first_name, last_name)

@@ -18,10 +18,21 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/invoice', (req, res) => {
+router.post('/invoice', async (req, res) => {
+  const {
+    customer,
+    salesperson,
+    product,
+    price,
+    quantity,
+    serviceDate,
+  } = req.body.invoice;
+  const totalPrice = price * quantity;
+  console.log(customer, salesperson, product, price, quantity, serviceDate);
+  let success = null;
   const token =
-    'eyJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwiYWxnIjoiZGlyIn0..XL2d6cqIS1AqysxTdm0yOw.DxeaPpiHxnECIj2MOVcV83MX8H4HTOy5FjqazXyR4G_3JQC289_XoOCh-c8ilJtf5eclsI9HFXwPJmKxCInwxt1Ga4P63xYLRsXpCFJBAxoTqQWq37ke9Jkw2TnT2TL-30L6FrfBJPIpzZEGbpBeJuowQTBPSyG3ty1JAeWge6WTyXGWAIE_cNWZQoRfkUKdZRv5bsq14fEinahmpGB_1kf1XrllfoGeWGNYRvotyUFzm92YvCV1Nn6j-0TLQHfCpL1rUOlZqaODV6uJdZH3KzJ24UtWZ2Whsy8qSBpoq1rtD3utMZ2uMC6Szqf5tuXfKj3p0Amxvib6itfEtrO_rOcv7KTdOlTZ_g8Z2R-MxbxJ5QxZBx3ZRAZIbyXt4E3i10YYynJY2s98wWXXHo7lkh49JAkp7n-chw0fne5Yq8Hb8Zf60lm4gRSenXt-PjjmEjXk4MiP1cTsKZae_CTBQFJ3L5AfDLukG9OGJCSFW1MFUNN5xufuj3PR0nrXa67-Kd4qOxp6z95UZXD7m-ukvSCfSSzKNSuU2WWgo8Ujgkaty37q7pmfihPYYzvNjw6hevQAc7OPqOqLRqqkQ4-p0_idg7Qi1k3k2EFTbpapjmcZTaAboqOrU52FQXDn0mL9d3SAwpj_5_-AjjWy5D8q7Mp3Lydyaf17vyDnfYdrOdmapLa9nxL_W7PTI007El8fOdaTGQDs0eRHFf8tj9Yfr6_DzLWW51ZMj7MWMI1-8S6Z7OR3z-C2S5-yFY8GTYraRAeimOjKUrwZqsRz2sIflT7ROaujyIpHf2p2aa8km0sUZo6K_fd6EN36M_fby8ypURy_9TkGpFPIEAqRRiZSKw.hr7RsKO3lEZbABuPWSCdQA';
-  axios({
+    'eyJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwiYWxnIjoiZGlyIn0..Z_xjIrhvYd4AAyRuocPazg.k6cs7dP-L9vXIRA9ZWcmrWMxHe35GP46oBg-YyFLVF2o6V-P_PChHxI6catJAT3pLxny_dQCd7VCZA_0FPMjwJhWKpMqCpV7vHItNQokupo0aJuB0wYHa7hRiF-kDBWmTwJpNGOhlNNYvFcqJdXgAnuOBgkPKaXzowAeg2GgqJZu7BE2lbXQbvvfnietcwffitWOnjwn2B6hMIQGOjCTGAvvPgKMZqGPzjT-EeBg13NZIha8F8m70rtFnSSAcwjTakPPSChn2KeE0s04sNov7b1uTMn1HMk4TjtNWbtwxYmTRVx-W1HRa0SNUHJJTQAKO1BsONwe-zPlrXzyhDLtD7dQBnMky9e6_O31m_OZFry1Blquc4O3KYShXHGNeZpYg4RjR1_2BLNNB_jrbSKx_EhiFf3jPiq2NIp1NomxLjf-F1vL3ByXiV7e_4-P2snv4Hzu8nm8NRJao2SVGSVW3uuf-Jd_NzvdYvt1wfTQwGQ920wCx9nKrh9UxtKZkMXuQCVXjRBqdT2OvnoCqJN_pOTnKJE4nPt4L1Z64NYo8IpeZb90cgrVWPcvCNKHk1G0elwu0ujgTnhulYjdVFwjG1QPoTWRPLgAJa6TR_n414KJPG936NbchehGgnML4jSvZuHg-CEC986niOd8Jb7lJqAW6wANd3LCtwX0N-IwbV2LbpmAXvvc4StPJ2MO9FPSeCMoDO0lLqVTQwlzOalhxPGbB9oukjlGeRl8vAXFUvv4yDQmNWC-pLQ02Pf566EahZY2fIB6byVgoS-hhT7kyENVGEeFH9ttNVLcqiJJw_NC-1mfkKT8M6mfGCo9x7hcAEVCcVA0Vl9z8lFSZ8b_vA.tISNiCH_AXCDM6iRbQAY6A';
+  await axios({
     method: 'post',
     url:
       'https://sandbox-quickbooks.api.intuit.com/v3/company/4620816365064691660/invoice?minorversion=54',
@@ -32,22 +43,58 @@ router.get('/invoice', (req, res) => {
       Line: [
         {
           DetailType: 'SalesItemLineDetail',
-          Amount: 69.0,
+          Amount: totalPrice,
           SalesItemLineDetail: {
+            Qty: quantity,
+            UnitPrice: price,
             ItemRef: {
               name: 'Services',
               value: '1',
             },
           },
         },
+        // {
+        //   DetailType: 'SalesItemLineDetail',
+        //   // Amount: quantity,
+        //   SalesItemLineDetail: {
+        //     ServiceDate: serviceDate,
+        //     Qty: quantity,
+        //     UnitPrice: price,
+        //     ItemRef: {
+        //       name: product.product_name,
+        //       // value is the account or type of service
+        //       value: '1',
+        //     },
+        //   },
+        // },
       ],
       CustomerRef: {
+        // need to change to customer id
         value: '1',
       },
     },
   })
-    .then((response) => console.log(response))
-    .catch((err) => console.log(err));
+    .then(() => {
+      success = true;
+    })
+    .catch((err) => {
+      console.log(err);
+      res.send(err);
+      success = false;
+    });
+  if (success) {
+    console.log('success');
+    try {
+      const dbInvoice = await pool.query(
+        `INSERT INTO SALES (customer_id, salesperson_id, product_id, price, quantity, service_date)
+        VALUES (${customer.id}, ${salesperson.id}, ${product.id}, ${price}, ${quantity}, '${serviceDate}')`
+      );
+      res.send('Success');
+    } catch (error) {
+      console.log(error);
+      res.send(error);
+    }
+  }
 });
 
 router.post('/customers', async (req, res) => {
