@@ -1,18 +1,17 @@
 const express = require('express');
 const axios = require('axios');
 const pool = require('../db');
+const { route } = require('./quickbooks');
 
 const router = express.Router();
 
 router.get('/', async (req, res) => {
   try {
-    const { sale } = req.body;
     const newSale = await pool.query(
       `INSERT INTO sales (customer_id, salesperson_id, service_date) 
       VALUES (1, 1, '2001-10-05')`
     );
     res.json(newSale);
-    // const sales = await pool.query('SELECT * FROM salespeople');
   } catch (error) {
     console.log(error);
   }
@@ -28,10 +27,9 @@ router.post('/invoice', async (req, res) => {
     serviceDate,
   } = req.body.invoice;
   const totalPrice = price * quantity;
-  console.log(customer, salesperson, product, price, quantity, serviceDate);
   let success = null;
   const token =
-    'eyJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwiYWxnIjoiZGlyIn0..Z_xjIrhvYd4AAyRuocPazg.k6cs7dP-L9vXIRA9ZWcmrWMxHe35GP46oBg-YyFLVF2o6V-P_PChHxI6catJAT3pLxny_dQCd7VCZA_0FPMjwJhWKpMqCpV7vHItNQokupo0aJuB0wYHa7hRiF-kDBWmTwJpNGOhlNNYvFcqJdXgAnuOBgkPKaXzowAeg2GgqJZu7BE2lbXQbvvfnietcwffitWOnjwn2B6hMIQGOjCTGAvvPgKMZqGPzjT-EeBg13NZIha8F8m70rtFnSSAcwjTakPPSChn2KeE0s04sNov7b1uTMn1HMk4TjtNWbtwxYmTRVx-W1HRa0SNUHJJTQAKO1BsONwe-zPlrXzyhDLtD7dQBnMky9e6_O31m_OZFry1Blquc4O3KYShXHGNeZpYg4RjR1_2BLNNB_jrbSKx_EhiFf3jPiq2NIp1NomxLjf-F1vL3ByXiV7e_4-P2snv4Hzu8nm8NRJao2SVGSVW3uuf-Jd_NzvdYvt1wfTQwGQ920wCx9nKrh9UxtKZkMXuQCVXjRBqdT2OvnoCqJN_pOTnKJE4nPt4L1Z64NYo8IpeZb90cgrVWPcvCNKHk1G0elwu0ujgTnhulYjdVFwjG1QPoTWRPLgAJa6TR_n414KJPG936NbchehGgnML4jSvZuHg-CEC986niOd8Jb7lJqAW6wANd3LCtwX0N-IwbV2LbpmAXvvc4StPJ2MO9FPSeCMoDO0lLqVTQwlzOalhxPGbB9oukjlGeRl8vAXFUvv4yDQmNWC-pLQ02Pf566EahZY2fIB6byVgoS-hhT7kyENVGEeFH9ttNVLcqiJJw_NC-1mfkKT8M6mfGCo9x7hcAEVCcVA0Vl9z8lFSZ8b_vA.tISNiCH_AXCDM6iRbQAY6A';
+    'eyJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwiYWxnIjoiZGlyIn0..Up7x_gR6EQ9uU68s7lwYlw.zDSyGW-lv1pCnJwLO1J0YpBnjoE5yrxAU4yErVbsrVSFZ1xY-6TAGFFPwuNsJSTvGwsh6I9ynmlaqBtZ3KJGAU2p2CK-cQgmCSkAY2oJYWJ9-3Kbc6ROek_soDIhHHLq8zN4hqu7UG2GOFKjdREIzocylvX_a1iGOHF37XlsIo_b_hYa19bIFxN0CVIeR3PvxCC4BAI1PlTMMRWgU6xLnulcRwfXsI6SACJRdQgbTB6uvx6YmE5iET73GyiYkfYwnPYDEpaeHaK2J_hKfOIrzkcx7fQ5XRRsoDeYsFd9nT5YWGpa1vR9jpv7z38QOuTxt193q5_5UsDi1pylimg4-ExNv980KTrTDM5nHSBAtxqfES-wFTMtaau4WnByK1AueN0IUPN4GwuD1BDomMJc79NiWXGLu1TJr0xpnxZJe39clBAY9G9NcAAha5sVV4qZ-_So-ablzRiE3kvabqPGfBwINHG7V-WKY9OPWGSTxMLKP3DS6AGhjREYigwydW3_7Tn0jUuL2MyBi8CLHPgrn9lGpseqBIhwSKsPgOQThi1THBsVHU9FewzCoipoLgd6A36SjzEn8HEe4PLIxMlN3hqxv3vN3sCwPCEjUnFWCsxmY6bRGCXHYBtjGVM8SVzli6cSaDQuUBHevDiIol2i1eNDfxfzRpYyJ2oG-bnRdCKhsOEgk5xd7vDm0iH_7M7HU7rbkQlGXajSCyFA1gl_TsBb_pa2s9-lZdZlQHbuMjRz4Gn3Uded8c6JrnXIiBF0baA0ZDkV7i8HrWxlvzmt_kZuCYnQx73F4TtNly-I5s3mJdLK0zQ5Y_tErTfwiVGNpmNbm2dP6vCgH0Vlta0Ibg._kaOJjo72HsJz3y4bTholQ';
   await axios({
     method: 'post',
     url:
@@ -53,20 +51,6 @@ router.post('/invoice', async (req, res) => {
             },
           },
         },
-        // {
-        //   DetailType: 'SalesItemLineDetail',
-        //   // Amount: quantity,
-        //   SalesItemLineDetail: {
-        //     ServiceDate: serviceDate,
-        //     Qty: quantity,
-        //     UnitPrice: price,
-        //     ItemRef: {
-        //       name: product.product_name,
-        //       // value is the account or type of service
-        //       value: '1',
-        //     },
-        //   },
-        // },
       ],
       CustomerRef: {
         // need to change to customer id
@@ -78,16 +62,14 @@ router.post('/invoice', async (req, res) => {
       success = true;
     })
     .catch((err) => {
-      console.log(err);
       res.send(err);
       success = false;
     });
   if (success) {
-    console.log('success');
     try {
       const dbInvoice = await pool.query(
-        `INSERT INTO SALES (customer_id, salesperson_id, product_id, price, quantity, service_date)
-        VALUES (${customer.id}, ${salesperson.id}, ${product.id}, ${price}, ${quantity}, '${serviceDate}')`
+        `INSERT INTO SALES (customer_id, salesperson_id, product_id, price, quantity, total_price, service_date)
+        VALUES (${customer.id}, ${salesperson.id}, ${product.id}, ${price}, ${quantity}, ${totalPrice}, '${serviceDate}')`
       );
       res.send('Success');
     } catch (error) {
@@ -137,6 +119,11 @@ router.post('/products', async (req, res) => {
   } catch (error) {
     console.log(error);
   }
+});
+
+router.get('/total', async (req, res) => {
+  const invoiceTotal = await pool.query(`SELECT SUM (total_price) FROM sales`);
+  res.send(invoiceTotal.rows);
 });
 
 module.exports = router;
