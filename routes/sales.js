@@ -1,22 +1,10 @@
 const express = require('express');
 const axios = require('axios');
 const pool = require('../db');
-const { route } = require('./quickbooks');
 
 const router = express.Router();
 
-router.get('/', async (req, res) => {
-  try {
-    const newSale = await pool.query(
-      `INSERT INTO sales (customer_id, salesperson_id, service_date) 
-      VALUES (1, 1, '2001-10-05')`
-    );
-    res.json(newSale);
-  } catch (error) {
-    console.log(error);
-  }
-});
-
+// Attempts to enter invoice into quickbooks, if this succeeds it enters into postgres.
 router.post('/invoice', async (req, res) => {
   const {
     customer,
@@ -29,7 +17,7 @@ router.post('/invoice', async (req, res) => {
   const totalPrice = price * quantity;
   let success = null;
   const token =
-    'eyJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwiYWxnIjoiZGlyIn0..Up7x_gR6EQ9uU68s7lwYlw.zDSyGW-lv1pCnJwLO1J0YpBnjoE5yrxAU4yErVbsrVSFZ1xY-6TAGFFPwuNsJSTvGwsh6I9ynmlaqBtZ3KJGAU2p2CK-cQgmCSkAY2oJYWJ9-3Kbc6ROek_soDIhHHLq8zN4hqu7UG2GOFKjdREIzocylvX_a1iGOHF37XlsIo_b_hYa19bIFxN0CVIeR3PvxCC4BAI1PlTMMRWgU6xLnulcRwfXsI6SACJRdQgbTB6uvx6YmE5iET73GyiYkfYwnPYDEpaeHaK2J_hKfOIrzkcx7fQ5XRRsoDeYsFd9nT5YWGpa1vR9jpv7z38QOuTxt193q5_5UsDi1pylimg4-ExNv980KTrTDM5nHSBAtxqfES-wFTMtaau4WnByK1AueN0IUPN4GwuD1BDomMJc79NiWXGLu1TJr0xpnxZJe39clBAY9G9NcAAha5sVV4qZ-_So-ablzRiE3kvabqPGfBwINHG7V-WKY9OPWGSTxMLKP3DS6AGhjREYigwydW3_7Tn0jUuL2MyBi8CLHPgrn9lGpseqBIhwSKsPgOQThi1THBsVHU9FewzCoipoLgd6A36SjzEn8HEe4PLIxMlN3hqxv3vN3sCwPCEjUnFWCsxmY6bRGCXHYBtjGVM8SVzli6cSaDQuUBHevDiIol2i1eNDfxfzRpYyJ2oG-bnRdCKhsOEgk5xd7vDm0iH_7M7HU7rbkQlGXajSCyFA1gl_TsBb_pa2s9-lZdZlQHbuMjRz4Gn3Uded8c6JrnXIiBF0baA0ZDkV7i8HrWxlvzmt_kZuCYnQx73F4TtNly-I5s3mJdLK0zQ5Y_tErTfwiVGNpmNbm2dP6vCgH0Vlta0Ibg._kaOJjo72HsJz3y4bTholQ';
+    'eyJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwiYWxnIjoiZGlyIn0..f0SwEPeAQaXTVEpmeZ7BhA.xpaDitfV-e5v7doi9eEKNP_w8iUpGt5xNAcFapkXeGrjo3YiBN2MDzc6mhit-6U5NmwrRG-5SbcBWF2F9oFcN-p_W2tVxT2prSiPOcnEoNRSoaV4H7b06EhIFG-J9VWn-81QtxrOOaNW0pK98f2f1n65Nlwr4ASmRbOOMATzOPssskpghXIzjqMmCUpc6sLmkpUe7zfAR11FCaXRmuMTGGDGmpCKpekW6NfcQNqxc85RjobgDA5Kb77rghfG9MSqKUJRRiJMLEq-tsIHv5nDaOXYs06opovAxterT9fqM-l74AV1Spzc1X8EAOGD5MXC5T_avncEFuGtzqK1lyQ1VVgXoBjpiSncGrKSWSBifZdLEgg6CTMC9AO6GJcdg3-_0cLSl_chTFJJ-LytUOtZv-lVr98EDImTj6LlZ-8DgMaVUiR3hNEm-eXHMpH3YZkHdS1wq-twbMNNiAQAuOMPw_Z1s39Tgix194OQEoHVgHfBgEPgcFKR3ZesJzGs3l0iiLF2H-zjzSsR_ZEKzqRt2TrWJD1NN1ePbTGxS38blU1Iyh7ijvef_gtZP7o9qnDXg51E7-BBHuAm0GAPzTL2HojJgrJMFJ7BI8m4ngsOzFzSxZy55T95OAh3_UTtApRGTj04gSsWAY3iKPaH9N8chLZ5QLYgDpoowI4sCHUyhJN4xOLg8QAWyI4LavPxjK9Bb2yF6ZB8K2pcGEKv4RUbsQPTqls15rkRcGXmqzZOpJquTk1Am88BpiiW4zCNe7r0vkZVReqoTiUgMe4NwIuOQ0jLAfHuncP8sz9irHYE6viJgumqgwib5k0g8evpET8I5hKvrfcluD34VgweT79SUw.0iO2pdvq3hfpUqY05KIMpQ';
   await axios({
     method: 'post',
     url:
@@ -79,48 +67,31 @@ router.post('/invoice', async (req, res) => {
   }
 });
 
-router.post('/customers', async (req, res) => {
+// Fetches customers, salespeople or products from postgres.
+router.post('/data', async (req, res) => {
   try {
+    const { type } = req.body;
     let { letters } = req.body;
     letters = letters.charAt(0).toUpperCase();
 
-    const customers = await pool.query(
-      `SELECT * FROM customers WHERE first_name LIKE '${letters}%';`
+    let column = null;
+
+    if (type === 'products') {
+      column = 'product_name';
+    } else {
+      column = 'first_name';
+    }
+
+    const data = await pool.query(
+      `SELECT * FROM ${type} WHERE ${column} LIKE '${letters}%';`
     );
-    res.send(customers.rows);
+    res.send(data.rows);
   } catch (error) {
     console.log(error);
   }
 });
 
-router.post('/salespeople', async (req, res) => {
-  try {
-    let { letters } = req.body;
-    letters = letters.charAt(0).toUpperCase();
-
-    const salespeople = await pool.query(
-      `SELECT * FROM salespeople WHERE first_name LIKE '${letters}%';`
-    );
-    res.send(salespeople.rows);
-  } catch (error) {
-    console.log(error);
-  }
-});
-
-router.post('/products', async (req, res) => {
-  try {
-    let { letters } = req.body;
-    letters = letters.charAt(0).toUpperCase();
-
-    const products = await pool.query(
-      `SELECT * FROM products WHERE product_name LIKE '${letters}%';`
-    );
-    res.send(products.rows);
-  } catch (error) {
-    console.log(error);
-  }
-});
-
+// Fetches totatl of all invoices from postgres.
 router.get('/total', async (req, res) => {
   const invoiceTotal = await pool.query(`SELECT SUM (total_price) FROM sales`);
   res.send(invoiceTotal.rows);
