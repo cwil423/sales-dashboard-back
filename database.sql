@@ -34,7 +34,7 @@ INSERT INTO customers (first_name, last_name)
 VALUES('Jim', 'Doe');
 
 INSERT INTO products (product_name, price)
-VALUES ('Basic filter', 10);
+VALUES ('Special filter', 20.75);
 
 ALTER TABLE sales
 ADD COLUMN service_date DATE;
@@ -55,3 +55,10 @@ service_date DATE NOT NULL
 
 INSERT INTO customers (first_name, last_name)
 VALUES ('Robert', 'Williamson');
+
+CREATE TABLE sales_products (
+sales_id INT REFERENCES sales (id) NOT NULL,
+product_id INT REFERENCES products (id) NOT NULL,
+quantity INT NOT NULL,
+PRIMARY KEY (sales_id, product_id)
+);
