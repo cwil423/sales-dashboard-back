@@ -6,14 +6,14 @@ const router = express.Router();
 
 // Attempts to enter invoice into quickbooks, if this succeeds it enters into postgres.
 router.post('/invoice', async (req, res) => {
-  const { customer, salesperson, items, frequency, bulk } = req.body.invoice;
+  const { customer, salesperson, products, frequency, bulk } = req.body.invoice;
   let totalPrice = 0;
 
-  items.forEach((element) => {
+  products.forEach((element) => {
     totalPrice += element.product.price * element.quantity;
   });
 
-  const line = items.map((item) => {
+  const line = products.map((item) => {
     const { quantity, price } = item;
     const total = item.price * item.quantity;
     return {
@@ -30,9 +30,9 @@ router.post('/invoice', async (req, res) => {
     };
   });
 
-  let success = true;
+  let success = false;
   const token =
-    'eyJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwiYWxnIjoiZGlyIn0..bwtyLz9hILcBDzYKkAxV3g.oxFSzRb39nIe-_3NVfx2wYOMfG5fCp9ZPZ2IB6eZAEm2XeMy8LLM1yuZEtBWLj2ovzc7c-lpV3i1pcBGvLCrDWUJpVM8FtvzcudhvFYfD7kWV4ZsYY_Xy8z7Li9resNpJJMpjD0D7DZ-CBSlZbH8RfpnmcfHoZuGJ5Zx1dIKZNrHAzOWUMfvepJRA8LZX3d3C1W-0p3dh2ORFQpMd6drPm94yw056ZxWkpObNZpGyt25wXK5iOPdFf-UAlY6fz4B6hkubJ_nBLc40DOjOYkv2aAZOESrx2PHRUD6t8tzjvGBqL-841QERrErROGjGqxy3KbM-xV0s4dLfpzMyPdDBbZ7SCuL0qi0LKfh381X2dyu28IuuPen1Jiz2TLOJAMx97Ohmtu1Pt67Pv8YbUjVwotjvocwq-E7FLydJXHPvOtNZfg7JFPrWILV9CuCAj1ElVvrYXNalvZA8TvTWeFr7PIVXrq8b7ILcNJ-8j7u3z5KeNKkIm3na1Qagf-Zv_wyLT-m-fnoypUfNNsV-lE5zHLz8eP3j4Lycld4Qc3ZevnaJRaZUGU5sbfPvwSJCV_-CGbqR7KaW8wiE2qBkaJ0KMIwGNENS-MM4xWrb4NFu6zOT4fFAczSjIhfkLLo7sjojFiEt61wBOUNf2Bh4Wysi64TVH2_BakJszgCYvdVt8rl5xRLjlqTS5bV6mNlVcZVB2JEKGxylbRYlDSa_GfzNs0PiV2FBhupmWqfpOhRXHClAk5gmROCjaK7Sm9i-TwmtKgMbNDwLeE1C-WPR9xWQRH06JgS543UobizrOk95X-JopoGT5THnpLIgvxhfi2G9u3PSGamz9AHwZ1KWNef3Q.Ca-sExute8127UW-3yc_oQ';
+    'eyJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwiYWxnIjoiZGlyIn0..e9MkA7eEoSOEUkUSKpICjA.D8sPMEmIF7-76MYZB0GynvKwYmnn4wk-K8qQPjLhbQFIKyR6U9knJVta8xtZLrXSNWztbi-tw_fceg-7q0kyOvEqx1MucqjvXVw15UGjIhF1tgXoxll8bY3ogophehsyjv8v7sXepS-y_zF5sNgTqP3V1JJyl__eskpuk6mQPLpPTGepaM7a5RjQGP93xHtobHURkFtC8W6GROBXdYYdYp25gOGK_oQDfodC4GaNW3pha8iFdJ_r5BpGNG-y7gNQX6wzifOWgNEuGrctdmS45ISIrClnW48-HCSVsxLBDNad0aVGBSNwUK0DSm0ykTyMpXT-8Xlg4b4hNaYopBNMmSfSZMttu2sqhyLWrXPxXeyM94FPNBiqTd3KZjk-o9vPmisO7hvuXpOcVKG0yCWJKoYr2Hgip_mDcNO1aOFNUAOCo5Wzli_Fnv_lFbk7tX5nTk20e-INHNZn8MOi5R10o3LW7iYZP_yHrNv0hpdtSx3nhLLkZB_FRHN-lV6BSw-LItrdkQtDGX6DQ1j-9OjwIr_eigHkVK2R56cMp5So3UYHLMfV2gxlW5vECXAto3RAj5gsOPQX8nW0v3I8814tFuJbozssGuGNVethPPOTC6VaUE-kMj9vqA_qSRv3mMaO4RjhoZh1hj4g4PKUfmtqltBL-36eyZwX25IQpvgfUO873YKkv3Jv2xIAP3phQ-V7IbxqBsGPX97U9Eaarr41ZflSprG9cvgMDUEttX5yl8vdy4xHynOLwzZR9-wlx6UftMlFuGraXiZSc8Vqw_rQQpbk9puoYhIVgOgCKDxsmSpwyHtLsnH_xH3TUk9wZPpp69Ispw05LualcdG3W6-YNg.SP53Gh1A2wiYW2wp1zfm8w';
   await axios({
     method: 'post',
     url:
@@ -63,7 +63,7 @@ router.post('/invoice', async (req, res) => {
       );
       const invoiceId = dbInvoice.rows[0].id;
 
-      items.forEach(async (item) => {
+      products.forEach(async (item) => {
         const quantity = parseInt(item.quantity, 10);
         const price = parseFloat(item.price);
         const dbSaleProduct = await pool.query(
