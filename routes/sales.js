@@ -1,5 +1,6 @@
 const express = require('express');
 const axios = require('axios');
+const { format } = require('date-fns');
 const pool = require('../db');
 
 const router = express.Router();
@@ -7,6 +8,8 @@ const router = express.Router();
 // Attempts to enter invoice into quickbooks, if this succeeds it enters into postgres.
 router.post('/invoice', async (req, res) => {
   const { customer, salesperson, products, frequency, bulk } = req.body.invoice;
+  const date = format(new Date(), 'yyy/MM/dd');
+
   let totalPrice = 0;
 
   products.forEach((element) => {
@@ -32,7 +35,7 @@ router.post('/invoice', async (req, res) => {
 
   let success = false;
   const token =
-    'eyJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwiYWxnIjoiZGlyIn0..e9MkA7eEoSOEUkUSKpICjA.D8sPMEmIF7-76MYZB0GynvKwYmnn4wk-K8qQPjLhbQFIKyR6U9knJVta8xtZLrXSNWztbi-tw_fceg-7q0kyOvEqx1MucqjvXVw15UGjIhF1tgXoxll8bY3ogophehsyjv8v7sXepS-y_zF5sNgTqP3V1JJyl__eskpuk6mQPLpPTGepaM7a5RjQGP93xHtobHURkFtC8W6GROBXdYYdYp25gOGK_oQDfodC4GaNW3pha8iFdJ_r5BpGNG-y7gNQX6wzifOWgNEuGrctdmS45ISIrClnW48-HCSVsxLBDNad0aVGBSNwUK0DSm0ykTyMpXT-8Xlg4b4hNaYopBNMmSfSZMttu2sqhyLWrXPxXeyM94FPNBiqTd3KZjk-o9vPmisO7hvuXpOcVKG0yCWJKoYr2Hgip_mDcNO1aOFNUAOCo5Wzli_Fnv_lFbk7tX5nTk20e-INHNZn8MOi5R10o3LW7iYZP_yHrNv0hpdtSx3nhLLkZB_FRHN-lV6BSw-LItrdkQtDGX6DQ1j-9OjwIr_eigHkVK2R56cMp5So3UYHLMfV2gxlW5vECXAto3RAj5gsOPQX8nW0v3I8814tFuJbozssGuGNVethPPOTC6VaUE-kMj9vqA_qSRv3mMaO4RjhoZh1hj4g4PKUfmtqltBL-36eyZwX25IQpvgfUO873YKkv3Jv2xIAP3phQ-V7IbxqBsGPX97U9Eaarr41ZflSprG9cvgMDUEttX5yl8vdy4xHynOLwzZR9-wlx6UftMlFuGraXiZSc8Vqw_rQQpbk9puoYhIVgOgCKDxsmSpwyHtLsnH_xH3TUk9wZPpp69Ispw05LualcdG3W6-YNg.SP53Gh1A2wiYW2wp1zfm8w';
+    'eyJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwiYWxnIjoiZGlyIn0..LfNDu7V5rVis35Pv2ZoxPQ.TpqRKqf55hylr7ESH9ihJY3YirynAUHOmnPU_ykwBVCL9Mn1e7V9Dj_n4YoHP9H6xorPLpElpTLmg-JrvW5PF3MMd7PWSO-u8FEx-IPDR2MOcynoo3oyHufBYy5gsN768o6fICi1M9S_LEghGfcdAN_FFZCqit6jXFF70z1QqWSLde18HuN3qBwP9oOt5JJXLbkni2KeHWjWddps8xsX75zI8C7PVWtcPkodY4GIRGpqLS7X2g2mPBPBJyYGFhFyfDgjmvlvqSf6jdbFSRU87d72dkyjBTWVl_QUxREerHRjUzHDvWaPbPo06juSFr8uHpQWsy1BgMgeoGyK-S9MesBed-PJpgmT-cAyih5yab6nIAT5AdlZoyXMhzvA7sOTO2ZT5BTr2q9CNOkyCKrwELV5ZwXWZjyBql4PVRJYYG6TLstR_mak-zyLTc3E1TsUnKKLJMUdn6VvOcEEdVCezPxzAbSUytlD9uvxSChyVqyOHwihBsXisZpIfW2gYNJ-YR62QldNB5OoLzmUx2m2eASOLRcvQS2m_nU_GzGxRrYiQY46fK1t4r1iDG01lWXZGRzHkF6n9_PA_xGQQI4kPMdPtcWsG7hQB1yR-4cUi8grcAoqQOQwYo_qE-YU0voK6EoCM2zKMOhY1D458YqgkeYpfyPB5FrogvEryJiPvxfo2GGoVSsaSPv9aEpaV8qdsD6rLS3ChYgJ4uoZTNNMh5jPE6B-hLV8d5__c3T1NnpnEpZw7nOWnoYhsIKVlDP47ACODwCzE96N-RGBVrfaXpiX70hdV1AsB9oc6JxdmmzCMFnhpjurNCfdFCPZyUT0900-mxu6xBtfh6tueJLlBA.Wm8HHYqprI30equm_TcK4g';
   await axios({
     method: 'post',
     url:
@@ -59,7 +62,7 @@ router.post('/invoice', async (req, res) => {
     try {
       const dbInvoice = await pool.query(
         `INSERT INTO sales (customer_id, salesperson_id, invoice_date)
-        VALUES (${customer.id}, ${salesperson.id}, '08/20/2020') RETURNING id`
+        VALUES (${customer.id}, ${salesperson.id}, '${date}') RETURNING id`
       );
       const invoiceId = dbInvoice.rows[0].id;
 
@@ -102,6 +105,7 @@ router.post('/data', async (req, res) => {
     res.send(data.rows);
   } catch (error) {
     console.log(error);
+    res.send(error);
   }
 });
 
@@ -111,6 +115,17 @@ router.get('/total', async (req, res) => {
     `SELECT SUM (total) FROM sales_products`
   );
   res.send(invoiceTotal.rows);
+});
+
+router.get('/weighted', async (req, res) => {
+  const currentMonth = format(new Date(), 'MM');
+
+  const invoicesFromThisMonth = await pool
+    .query(
+      `SELECT * FROM sales_products WHERE sales_id IN (SELECT id FROM sales WHERE EXTRACT (MONTH FROM invoice_date) = '${currentMonth}')`
+    )
+    .catch((error) => console.log(error));
+  res.send(invoicesFromThisMonth.rows);
 });
 
 module.exports = router;
