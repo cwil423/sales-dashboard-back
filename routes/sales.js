@@ -12,8 +12,8 @@ router.post('/invoice', async (req, res) => {
 
   let totalPrice = 0;
 
-  products.forEach((element) => {
-    totalPrice += element.product.price * element.quantity;
+  products.forEach((item) => {
+    totalPrice += parseFloat(item.price) * parseInt(item.quantity, 10);
   });
 
   const line = products.map((item) => {
@@ -33,31 +33,31 @@ router.post('/invoice', async (req, res) => {
     };
   });
 
-  let success = false;
-  const token =
-    'eyJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwiYWxnIjoiZGlyIn0..LfNDu7V5rVis35Pv2ZoxPQ.TpqRKqf55hylr7ESH9ihJY3YirynAUHOmnPU_ykwBVCL9Mn1e7V9Dj_n4YoHP9H6xorPLpElpTLmg-JrvW5PF3MMd7PWSO-u8FEx-IPDR2MOcynoo3oyHufBYy5gsN768o6fICi1M9S_LEghGfcdAN_FFZCqit6jXFF70z1QqWSLde18HuN3qBwP9oOt5JJXLbkni2KeHWjWddps8xsX75zI8C7PVWtcPkodY4GIRGpqLS7X2g2mPBPBJyYGFhFyfDgjmvlvqSf6jdbFSRU87d72dkyjBTWVl_QUxREerHRjUzHDvWaPbPo06juSFr8uHpQWsy1BgMgeoGyK-S9MesBed-PJpgmT-cAyih5yab6nIAT5AdlZoyXMhzvA7sOTO2ZT5BTr2q9CNOkyCKrwELV5ZwXWZjyBql4PVRJYYG6TLstR_mak-zyLTc3E1TsUnKKLJMUdn6VvOcEEdVCezPxzAbSUytlD9uvxSChyVqyOHwihBsXisZpIfW2gYNJ-YR62QldNB5OoLzmUx2m2eASOLRcvQS2m_nU_GzGxRrYiQY46fK1t4r1iDG01lWXZGRzHkF6n9_PA_xGQQI4kPMdPtcWsG7hQB1yR-4cUi8grcAoqQOQwYo_qE-YU0voK6EoCM2zKMOhY1D458YqgkeYpfyPB5FrogvEryJiPvxfo2GGoVSsaSPv9aEpaV8qdsD6rLS3ChYgJ4uoZTNNMh5jPE6B-hLV8d5__c3T1NnpnEpZw7nOWnoYhsIKVlDP47ACODwCzE96N-RGBVrfaXpiX70hdV1AsB9oc6JxdmmzCMFnhpjurNCfdFCPZyUT0900-mxu6xBtfh6tueJLlBA.Wm8HHYqprI30equm_TcK4g';
-  await axios({
-    method: 'post',
-    url:
-      'https://sandbox-quickbooks.api.intuit.com/v3/company/4620816365064691660/invoice?minorversion=54',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    data: {
-      Line: line,
-      CustomerRef: {
-        // need to change to customer id
-        value: '1',
-      },
-    },
-  })
-    .then(() => {
-      success = true;
-    })
-    .catch((err) => {
-      res.send(err);
-      success = false;
-    });
+  let success = true;
+  // const token =
+  //   'eyJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwiYWxnIjoiZGlyIn0..LfNDu7V5rVis35Pv2ZoxPQ.TpqRKqf55hylr7ESH9ihJY3YirynAUHOmnPU_ykwBVCL9Mn1e7V9Dj_n4YoHP9H6xorPLpElpTLmg-JrvW5PF3MMd7PWSO-u8FEx-IPDR2MOcynoo3oyHufBYy5gsN768o6fICi1M9S_LEghGfcdAN_FFZCqit6jXFF70z1QqWSLde18HuN3qBwP9oOt5JJXLbkni2KeHWjWddps8xsX75zI8C7PVWtcPkodY4GIRGpqLS7X2g2mPBPBJyYGFhFyfDgjmvlvqSf6jdbFSRU87d72dkyjBTWVl_QUxREerHRjUzHDvWaPbPo06juSFr8uHpQWsy1BgMgeoGyK-S9MesBed-PJpgmT-cAyih5yab6nIAT5AdlZoyXMhzvA7sOTO2ZT5BTr2q9CNOkyCKrwELV5ZwXWZjyBql4PVRJYYG6TLstR_mak-zyLTc3E1TsUnKKLJMUdn6VvOcEEdVCezPxzAbSUytlD9uvxSChyVqyOHwihBsXisZpIfW2gYNJ-YR62QldNB5OoLzmUx2m2eASOLRcvQS2m_nU_GzGxRrYiQY46fK1t4r1iDG01lWXZGRzHkF6n9_PA_xGQQI4kPMdPtcWsG7hQB1yR-4cUi8grcAoqQOQwYo_qE-YU0voK6EoCM2zKMOhY1D458YqgkeYpfyPB5FrogvEryJiPvxfo2GGoVSsaSPv9aEpaV8qdsD6rLS3ChYgJ4uoZTNNMh5jPE6B-hLV8d5__c3T1NnpnEpZw7nOWnoYhsIKVlDP47ACODwCzE96N-RGBVrfaXpiX70hdV1AsB9oc6JxdmmzCMFnhpjurNCfdFCPZyUT0900-mxu6xBtfh6tueJLlBA.Wm8HHYqprI30equm_TcK4g';
+  // await axios({
+  //   method: 'post',
+  //   url:
+  //     'https://sandbox-quickbooks.api.intuit.com/v3/company/4620816365064691660/invoice?minorversion=54',
+  //   headers: {
+  //     Authorization: `Bearer ${token}`,
+  //   },
+  //   data: {
+  //     Line: line,
+  //     CustomerRef: {
+  //       // need to change to customer id
+  //       value: '1',
+  //     },
+  //   },
+  // })
+  //   .then(() => {
+  //     success = true;
+  //   })
+  //   .catch((err) => {
+  //     res.send(err);
+  //     success = false;
+  //   });
   if (success) {
     try {
       const dbInvoice = await pool.query(
@@ -70,12 +70,22 @@ router.post('/invoice', async (req, res) => {
         const quantity = parseInt(item.quantity, 10);
         const price = parseFloat(item.price);
         const dbSaleProduct = await pool.query(
-          `INSERT INTO sales_products (sales_id, product_id, quantity, price, total, frequency, bulk)
+          `INSERT INTO sales_products (sales_id, product_id, quantity, price, total, bulk, frequency)
           VALUES (${invoiceId}, ${item.id}, ${item.quantity}, ${item.price}, ${
             quantity * price
-          }, ${frequency}, ${bulk})`
+          }, ${bulk}, '${frequency.label}' )`
         );
       });
+
+      for (let i = 0; i < frequency.monthsUntilNextDelivery; i++) {
+        const weightedSales = await pool.query(
+          `INSERT INTO weighted_sales (sales_id, sale_date, weighted_amount)
+          VALUES (${invoiceId}, CURRENT_DATE + INTERVAL '${i} MONTHS', ${
+            totalPrice / frequency.monthsUntilNextDelivery
+          } )`
+        );
+      }
+
       res.send('Success');
     } catch (error) {
       console.log(error);
@@ -119,13 +129,29 @@ router.get('/total', async (req, res) => {
 
 router.get('/weighted', async (req, res) => {
   const currentMonth = format(new Date(), 'MM');
+  const currentYear = format(new Date(), 'yyyy');
+
+  const weightedInvoices = await pool
+    .query(
+      // `SELECT * FROM sales_products WHERE sales_id IN (SELECT id FROM sales WHERE invoice_date >= CURRENT_DATE - INTERVAL '6 months')`
+      `SELECT * FROM sales_products WHERE EXTRACT (YEAR FROM invoice_date) = ${currentYear}
+      AND EXTRACT (MONTH FROM invoice_date) >= ${currentMonth - 1}`
+    )
+    .catch((error) => console.log(error));
+  res.send(weightedInvoices.rows);
+});
+
+router.get('/thisMonth', async (req, res) => {
+  const currentMonth = format(new Date(), 'MM');
+  const currentYear = format(new Date(), 'yyyy');
 
   const invoicesFromThisMonth = await pool
     .query(
-      `SELECT * FROM sales_products WHERE sales_id IN (SELECT id FROM sales WHERE EXTRACT (MONTH FROM invoice_date) = '${currentMonth}')`
+      `SELECT SUM(total) FROM sales_products WHERE EXTRACT (YEAR FROM invoice_date) = ${currentYear}
+      AND EXTRACT (MONTH FROM invoice_date) = '${currentMonth}'`
     )
     .catch((error) => console.log(error));
-  res.send(invoicesFromThisMonth.rows);
+  res.send(invoicesFromThisMonth.rows[0]);
 });
 
 module.exports = router;
