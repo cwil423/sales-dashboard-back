@@ -133,9 +133,7 @@ router.get('/weighted', async (req, res) => {
 
   const weightedInvoices = await pool
     .query(
-      // `SELECT * FROM sales_products WHERE sales_id IN (SELECT id FROM sales WHERE invoice_date >= CURRENT_DATE - INTERVAL '6 months')`
-      `SELECT * FROM sales_products WHERE EXTRACT (YEAR FROM invoice_date) = ${currentYear}
-      AND EXTRACT (MONTH FROM invoice_date) >= ${currentMonth - 1}`
+      `SELECT * FROM weighted_sales WHERE sale_date < date '${currentYear}-${currentMonth}-01' + interval '6 months' AND sale_date > '${currentYear}-${currentMonth}-01'`
     )
     .catch((error) => console.log(error));
   res.send(weightedInvoices.rows);
