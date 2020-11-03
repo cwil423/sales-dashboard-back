@@ -1,5 +1,7 @@
 {
   "extends": ["airbnb", "prettier"],
   "plugins": ["prettier"],
-  "rules": {}
+  "rules": {
+    "no-await-in-loop": "off"
+  }
 }

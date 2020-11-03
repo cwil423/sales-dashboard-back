@@ -1,6 +1,6 @@
 const express = require('express');
 const axios = require('axios');
-const { format } = require('date-fns');
+const { format, add } = require('date-fns');
 const pool = require('../db');
 
 const router = express.Router();
@@ -128,15 +128,22 @@ router.get('/total', async (req, res) => {
 });
 
 router.get('/weighted', async (req, res) => {
-  const currentMonth = format(new Date(), 'MM');
   const currentYear = format(new Date(), 'yyyy');
+  const currentMonth = format(new Date(), 'MM');
+  const sums = [];
 
-  const weightedInvoices = await pool
-    .query(
-      `SELECT * FROM weighted_sales WHERE sale_date < date '${currentYear}-${currentMonth}-01' + interval '6 months' AND sale_date > '${currentYear}-${currentMonth}-01'`
-    )
-    .catch((error) => console.log(error));
-  res.send(weightedInvoices.rows);
+  for (let i = 0; i < 6; i++) {
+    const weightedSales = await pool.query(
+      `SELECT SUM (weighted_amount) FROM weighted_sales 
+      WHERE sale_date < date '${currentYear}-${currentMonth}-01' + interval '${
+        i + 1
+      } months' 
+      AND sale_date > date '${currentYear}-${currentMonth}-01' + interval '${i} months'`
+    );
+    sums.push(weightedSales.rows[0].sum);
+    console.log(sums);
+  }
+  res.send(sums);
 });
 
 router.get('/thisMonth', async (req, res) => {
