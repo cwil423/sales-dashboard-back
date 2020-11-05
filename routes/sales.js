@@ -1,6 +1,6 @@
 const express = require('express');
 const axios = require('axios');
-const { format, add } = require('date-fns');
+const { format } = require('date-fns');
 const pool = require('../db');
 
 const router = express.Router();
@@ -131,6 +131,7 @@ router.get('/weighted', async (req, res) => {
   const currentYear = format(new Date(), 'yyyy');
   const currentMonth = format(new Date(), 'MM');
   const sums = [];
+  const months = [];
 
   for (let i = 0; i < 6; i++) {
     const weightedSales = await pool.query(
@@ -141,22 +142,20 @@ router.get('/weighted', async (req, res) => {
       AND sale_date > date '${currentYear}-${currentMonth}-01' + interval '${i} months'`
     );
     sums.push(weightedSales.rows[0].sum);
-    console.log(sums);
   }
-  res.send(sums);
-});
 
-router.get('/thisMonth', async (req, res) => {
-  const currentMonth = format(new Date(), 'MM');
-  const currentYear = format(new Date(), 'yyyy');
-
-  const invoicesFromThisMonth = await pool
-    .query(
-      `SELECT SUM(total) FROM sales_products WHERE EXTRACT (YEAR FROM invoice_date) = ${currentYear}
-      AND EXTRACT (MONTH FROM invoice_date) = '${currentMonth}'`
-    )
-    .catch((error) => console.log(error));
-  res.send(invoicesFromThisMonth.rows[0]);
+  for (let i = 0; i < 6; i++) {
+    const weightedSalesMonths = await pool.query(
+      `SELECT TO_CHAR(sale_date, 'Month') AS "Month" FROM weighted_sales
+      WHERE sale_date < date '${currentYear}-${currentMonth}-01' + interval '${
+        i + 1
+      } months' 
+      AND sale_date > date '${currentYear}-${currentMonth}-01' + interval '${i} months' 
+      LIMIT 1`
+    );
+    months.push(weightedSalesMonths.rows[0]);
+  }
+  res.send([sums, months]);
 });
 
 module.exports = router;
