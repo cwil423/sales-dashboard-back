@@ -2,6 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const { format } = require('date-fns');
 const pool = require('../db');
+const { id } = require('date-fns/locale');
 
 const router = express.Router();
 
@@ -74,6 +75,10 @@ router.post('/invoice', async (req, res) => {
           VALUES (${invoiceId}, ${item.id}, ${item.quantity}, ${item.price}, ${
             quantity * price
           }, ${bulk}, '${frequency.label}' )`
+        );
+        const inventoryForecast = await pool.query(
+          `INSERT INTO inventory_forecast (sales_id, sale_date, number_of_filters, filter_id)
+            VALUES (${invoiceId}, CURRENT_DATE + INTERVAL '${frequency.monthsUntilNextDelivery} MONTHS', ${quantity}, ${item.id} )`
         );
       });
 
