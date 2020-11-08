@@ -14,6 +14,7 @@ router.post('/', async (req, res) => {
 
   const inventory_forecast = await pool.query(
     `SELECT * FROM inventory_forecast
+    JOIN products on inventory_forecast.filter_id = products.id
       WHERE sale_date < date '${currentYear}-${currentMonth}-01' + interval '${
       monthsAhead + 1
     } months'
