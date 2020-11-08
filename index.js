@@ -6,6 +6,7 @@ const cors = require('cors');
 const oauthRoute = require('./routes/oauth');
 const quickbooksRoute = require('./routes/quickbooks');
 const salesRoute = require('./routes/sales');
+const inventoryRoute = require('./routes/inventory');
 
 require('dotenv').config();
 
@@ -36,6 +37,7 @@ app.use('/oauth', express.static('public'));
 app.use('/oauth', oauthRoute);
 app.use('/quickbooks', quickbooksRoute);
 app.use('/sales', salesRoute);
+app.use('/inventory', inventoryRoute);
 
 app.get('/', (req, res) => {
   res.send('home');

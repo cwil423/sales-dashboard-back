@@ -2,7 +2,6 @@ const express = require('express');
 const axios = require('axios');
 const { format } = require('date-fns');
 const pool = require('../db');
-const { id } = require('date-fns/locale');
 
 const router = express.Router();
 
@@ -125,12 +124,12 @@ router.post('/data', async (req, res) => {
 });
 
 // Fetches totatl of all invoices from postgres.
-router.get('/total', async (req, res) => {
-  const invoiceTotal = await pool.query(
-    `SELECT SUM (total) FROM sales_products`
-  );
-  res.send(invoiceTotal.rows);
-});
+// router.get('/total', async (req, res) => {
+//   const invoiceTotal = await pool.query(
+//     `SELECT SUM (total) FROM sales_products`
+//   );
+//   res.send(invoiceTotal.rows);
+// });
 
 router.get('/weighted', async (req, res) => {
   const currentYear = format(new Date(), 'yyyy');
@@ -162,5 +161,9 @@ router.get('/weighted', async (req, res) => {
   }
   res.send([sums, months]);
 });
+
+// router.get('/inventory', (req, res) => {
+//   const inventoryForecast = await pool.query()
+// });
 
 module.exports = router;
