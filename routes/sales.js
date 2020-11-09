@@ -71,13 +71,13 @@ router.post('/invoice', async (req, res) => {
         const price = parseFloat(item.price);
         const dbSaleProduct = await pool.query(
           `INSERT INTO sales_products (sales_id, product_id, quantity, price, total, bulk, frequency)
-          VALUES (${invoiceId}, ${item.id}, ${item.quantity}, ${item.price}, ${
-            quantity * price
-          }, ${bulk}, '${frequency.label}' )`
+          VALUES (${invoiceId}, ${item.product.id}, ${item.quantity}, ${
+            item.price
+          }, ${quantity * price}, ${bulk}, '${frequency.label}' )`
         );
         const inventoryForecast = await pool.query(
           `INSERT INTO inventory_forecast (sales_id, sale_date, number_of_filters, filter_id)
-            VALUES (${invoiceId}, CURRENT_DATE + INTERVAL '${frequency.monthsUntilNextDelivery} MONTHS', ${quantity}, ${item.id} )`
+            VALUES (${invoiceId}, CURRENT_DATE + INTERVAL '${frequency.monthsUntilNextDelivery} MONTHS', ${quantity}, ${item.product.id} )`
         );
       });
 
