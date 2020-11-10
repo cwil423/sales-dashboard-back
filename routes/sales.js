@@ -82,7 +82,7 @@ router.post('/invoice', async (req, res) => {
       });
 
       for (let i = 0; i < frequency.monthsUntilNextDelivery; i++) {
-        const weightedSales = await pool.query(
+        const newWeightedSales = await pool.query(
           `INSERT INTO weighted_sales (sales_id, sale_date, weighted_amount)
           VALUES (${invoiceId}, CURRENT_DATE + INTERVAL '${i} MONTHS', ${
             totalPrice / frequency.monthsUntilNextDelivery
