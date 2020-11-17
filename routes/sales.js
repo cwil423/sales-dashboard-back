@@ -75,10 +75,26 @@ router.post('/invoice', async (req, res) => {
             item.price
           }, ${quantity * price}, ${bulk}, '${frequency.label}' )`
         );
-        const inventoryForecast = await pool.query(
-          `INSERT INTO inventory_forecast (sales_id, sale_date, number_of_filters, filter_id)
-            VALUES (${invoiceId}, CURRENT_DATE + INTERVAL '${frequency.monthsUntilNextDelivery} MONTHS', ${quantity}, ${item.product.id} )`
-        );
+        // const inventoryForecast = await pool.query(
+        //   `INSERT INTO inventory_forecast (sales_id, sale_date, number_of_filters, filter_id)
+        //     VALUES (${invoiceId}, CURRENT_DATE + INTERVAL '${frequency.monthsUntilNextDelivery} MONTHS', ${quantity}, ${item.product.id} )`
+        // );
+        if (frequency.weeksUntilNextDelivery) {
+          for (let i = 0; i < 52; i += frequency.weeksUntilNextDelivery) {
+            const forecasts = await pool.query(
+              `INSERT INTO forecasts (sale_id, product_id, forecast_date)
+                VALUES (${invoiceId}, ${item.product.id}, CURRENT_DATE + INTERVAL '${i} WEEKS')`
+            );
+          }
+        }
+        if (frequency.monthsUntilNextDelivery) {
+          for (let i = 0; i < 12; i += frequency.monthsUntilNextDelivery) {
+            const forecasts = await pool.query(
+              `INSERT INTO forecasts (sale_id, product_id, forecast_date)
+                VALUES (${invoiceId}, ${item.product.id}, CURRENT_DATE + INTERVAL '${i} MONTHS')`
+            );
+          }
+        }
       });
 
       for (let i = 0; i < frequency.monthsUntilNextDelivery; i++) {
@@ -123,14 +139,6 @@ router.post('/data', async (req, res) => {
   }
 });
 
-// Fetches totatl of all invoices from postgres.
-// router.get('/total', async (req, res) => {
-//   const invoiceTotal = await pool.query(
-//     `SELECT SUM (total) FROM sales_products`
-//   );
-//   res.send(invoiceTotal.rows);
-// });
-
 router.get('/weighted', async (req, res) => {
   const currentYear = format(new Date(), 'yyyy');
   const currentMonth = format(new Date(), 'MM');
@@ -143,7 +151,7 @@ router.get('/weighted', async (req, res) => {
       WHERE sale_date < date '${currentYear}-${currentMonth}-01' + interval '${
         i + 1
       } months' 
-      AND sale_date > date '${currentYear}-${currentMonth}-01' + interval '${i} months'`
+      AND sale_date >= date '${currentYear}-${currentMonth}-01' + interval '${i} months'`
     );
     sums.push(weightedSales.rows[0].sum);
   }
@@ -154,7 +162,7 @@ router.get('/weighted', async (req, res) => {
       WHERE sale_date < date '${currentYear}-${currentMonth}-01' + interval '${
         i + 1
       } months' 
-      AND sale_date > date '${currentYear}-${currentMonth}-01' + interval '${i} months' 
+      AND sale_date >= date '${currentYear}-${currentMonth}-01' + interval '${i} months' 
       LIMIT 1`
     );
     months.push(weightedSalesMonths.rows[0]);
@@ -162,8 +170,38 @@ router.get('/weighted', async (req, res) => {
   res.send([sums, months]);
 });
 
-// router.get('/inventory', (req, res) => {
-//   const inventoryForecast = await pool.query()
-// });
+router.get('/forecast', async (req, res) => {
+  const currentYear = format(new Date(), 'yyyy');
+  const currentMonth = format(new Date(), 'MM');
+  const sums = [];
+  const months = [];
+
+  for (let i = 0; i < 6; i++) {
+    const forecast = await pool.query(
+      `SELECT SUM (total) FROM sales_products
+      INNER JOIN forecasts 
+      ON sale_id = sales_id
+      WHERE forecast_date < date '${currentYear}-${currentMonth}-01' + interval '${
+        i + 1
+      } months'
+      AND forecast_date >= date '${currentYear}-${currentMonth}-01' + interval '${i} months'`
+    );
+    console.log(forecast.rows);
+    sums.push(forecast.rows[0].sum);
+  }
+
+  for (let i = 0; i < 6; i++) {
+    const weightedSalesMonths = await pool.query(
+      `SELECT TO_CHAR(forecast_date, 'Month') AS "Month" FROM forecasts
+      WHERE forecast_date < date '${currentYear}-${currentMonth}-01' + interval '${
+        i + 1
+      } months'
+      AND forecast_date > date '${currentYear}-${currentMonth}-01' + interval '${i} months'
+      LIMIT 1`
+    );
+    months.push(weightedSalesMonths.rows[0]);
+  }
+  res.send([sums, months]);
+});
 
 module.exports = router;

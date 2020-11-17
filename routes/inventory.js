@@ -5,8 +5,6 @@ const pool = require('../db');
 const router = express.Router();
 
 router.post('/', async (req, res) => {
-  // const currentYear = format(new Date(), 'yyyy');
-  // const currentMonth = format(new Date(), 'MM');
   const { month, year } = req.body;
 
   const inventory_forecast = await pool.query(
@@ -18,6 +16,44 @@ router.post('/', async (req, res) => {
   );
   console.log(inventory_forecast.rows);
   res.send(inventory_forecast.rows);
+});
+
+router.get('/forecast', async (req, res) => {
+  const currentYear = format(new Date(), 'yyyy');
+  const currentMonth = format(new Date(), 'MM');
+  const sums = [];
+  const months = [];
+
+  for (let i = 0; i < 6; i++) {
+    const forecast = await pool.query(
+      `SELECT sales_products.quantity, products.product_name
+      FROM sales_products
+      INNER JOIN forecasts ON sales_products.sales_id = forecasts.sale_id
+      INNER JOIN products ON products.id = sales_products.product_id
+      WHERE forecast_date < date '${currentYear}-${currentMonth}-01' + interval '${
+        i + 1
+      } months'
+      AND forecast_date >= date '${currentYear}-${currentMonth}-01' + interval '${i} months'`
+    );
+    sums.push(forecast.rows);
+  }
+
+  for (let i = 0; i < 6; i++) {
+    const weightedSalesMonths = await pool.query(
+      `SELECT TO_CHAR(forecast_date, 'Month') AS "Month" FROM forecasts
+      WHERE forecast_date < date '${currentYear}-${currentMonth}-01' + interval '${
+        i + 1
+      } months'
+      AND forecast_date > date '${currentYear}-${currentMonth}-01' + interval '${i} months'
+      LIMIT 1`
+    );
+    months.push(weightedSalesMonths.rows[0]);
+  }
+  res.send([sums, months]);
+});
+
+router.post('/enter', (req, res) => {
+  res.send('yes');
 });
 
 module.exports = router;
