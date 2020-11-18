@@ -97,13 +97,30 @@ router.post('/invoice', async (req, res) => {
         }
       });
 
-      for (let i = 0; i < frequency.monthsUntilNextDelivery; i++) {
+      // for (let i = 0; i < frequency.monthsUntilNextDelivery; i++) {
+      //   const newWeightedSales = await pool.query(
+      //     `INSERT INTO weighted_sales (sales_id, sale_date, weighted_amount)
+      //     VALUES (${invoiceId}, CURRENT_DATE + INTERVAL '${i} MONTHS', ${
+      //       totalPrice / frequency.monthsUntilNextDelivery
+      //     } )`
+      //   );
+      // }
+
+      if (frequency.weeksUntilNextDelivery) {
         const newWeightedSales = await pool.query(
           `INSERT INTO weighted_sales (sales_id, sale_date, weighted_amount)
-          VALUES (${invoiceId}, CURRENT_DATE + INTERVAL '${i} MONTHS', ${
+            VALUES (${invoiceId}, CURRENT_DATE, ${
             totalPrice / frequency.monthsUntilNextDelivery
           } )`
         );
+      }
+      if (frequency.monthsUntilNextDelivery) {
+        if ((frequency.monthsUntilNextDelivery = 6 || 12)) {
+          const newWeightedSales = await pool.query(
+            `INSERT INTO weighted_sales (sales_id, sale_date, weighted_amount)
+            VALUES (${invoiceId}, CURRENT_DATE, ${totalPrice / 2} )`
+          );
+        }
       }
 
       res.send('Success');
@@ -144,14 +161,29 @@ router.get('/weighted', async (req, res) => {
   const currentMonth = format(new Date(), 'MM');
   const sums = [];
   const months = [];
+  let currentSum = null;
+  let currentMonthName = null;
+
+  const currentWeightedSales = await pool.query(
+    `SELECT SUM (weighted_amount) FROM weighted_sales
+    WHERE EXTRACT (MONTH FROM sale_date) = ${currentMonth}`
+  );
+  currentSum = currentWeightedSales.rows[0];
+
+  const currentWeightedMonth = await pool.query(
+    `SELECT TO_CHAR(sale_date, 'Month') AS "Month" FROM weighted_sales
+    WHERE EXTRACT (MONTH FROM sale_date) = ${currentMonth}
+    LIMIT 1`
+  );
+  currentMonthName = currentWeightedMonth.rows[0];
 
   for (let i = 0; i < 6; i++) {
     const weightedSales = await pool.query(
       `SELECT SUM (weighted_amount) FROM weighted_sales 
-      WHERE sale_date < date '${currentYear}-${currentMonth}-01' + interval '${
+      WHERE sale_date >= date '${currentYear}-${currentMonth}-01' - interval '${
         i + 1
       } months' 
-      AND sale_date >= date '${currentYear}-${currentMonth}-01' + interval '${i} months'`
+      AND sale_date < date '${currentYear}-${currentMonth}-01' - interval '${i} months'`
     );
     sums.push(weightedSales.rows[0].sum);
   }
@@ -159,15 +191,15 @@ router.get('/weighted', async (req, res) => {
   for (let i = 0; i < 6; i++) {
     const weightedSalesMonths = await pool.query(
       `SELECT TO_CHAR(sale_date, 'Month') AS "Month" FROM weighted_sales
-      WHERE sale_date < date '${currentYear}-${currentMonth}-01' + interval '${
+      WHERE sale_date >= date '${currentYear}-${currentMonth}-01' - interval '${
         i + 1
       } months' 
-      AND sale_date >= date '${currentYear}-${currentMonth}-01' + interval '${i} months' 
+      AND sale_date < date '${currentYear}-${currentMonth}-01' - interval '${i} months' 
       LIMIT 1`
     );
     months.push(weightedSalesMonths.rows[0]);
   }
-  res.send([sums, months]);
+  res.send([sums, months, currentSum, currentMonthName]);
 });
 
 router.get('/forecast', async (req, res) => {
@@ -186,7 +218,6 @@ router.get('/forecast', async (req, res) => {
       } months'
       AND forecast_date >= date '${currentYear}-${currentMonth}-01' + interval '${i} months'`
     );
-    console.log(forecast.rows);
     sums.push(forecast.rows[0].sum);
   }
 
