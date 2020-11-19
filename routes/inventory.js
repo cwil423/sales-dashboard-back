@@ -26,16 +26,18 @@ router.get('/forecast', async (req, res) => {
 
   for (let i = 0; i < 6; i++) {
     const forecast = await pool.query(
-      `SELECT sales_products.quantity, products.product_name
+      `SELECT SUM (sales_products.quantity), products.product_name
       FROM sales_products
       INNER JOIN forecasts ON sales_products.sales_id = forecasts.sale_id
       INNER JOIN products ON products.id = sales_products.product_id
       WHERE forecast_date < date '${currentYear}-${currentMonth}-01' + interval '${
         i + 1
       } months'
-      AND forecast_date >= date '${currentYear}-${currentMonth}-01' + interval '${i} months'`
+      AND forecast_date >= date '${currentYear}-${currentMonth}-01' + interval '${i} months'
+      GROUP BY products.product_name`
     );
     sums.push(forecast.rows);
+    console.log(forecast.rows);
   }
 
   for (let i = 0; i < 6; i++) {
