@@ -60,3 +60,23 @@ sales_id INT REFERENCES sales (id) NOT NULL,
 sale_date DATE NOT NULL,
 weighted_amount MONEY NOT NULL
 );
+
+CREATE TABLE transactions (
+id SERIAL PRIMARY KEY,
+transaction_date DATE NOT NULL,
+product VARCHAR(255) NOT NULL,
+quantity INT NOT NULL,
+price MONEY NOT NULL,
+total MONEY NOT NULL,
+customer VARCHAR(255) NOT NULL
+
+);
+
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  first_name VARCHAR(255) NOT NULL,
+  last_name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  salesPerson BOOLEAN NOT NULL
+);

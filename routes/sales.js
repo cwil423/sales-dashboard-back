@@ -59,13 +59,27 @@ router.post('/invoice', async (req, res) => {
   //     success = false;
   //   });
   if (success) {
+    console.log(req.body);
+    // try {
+    //   products.forEach(async (item) => {
+    //     const quantity = parseInt(item.quantity, 10);
+    //     const price = parseFloat(item.price);
+    //     const newTransaction = await pool.query(
+    //       `INSERT INTO transactions (transaction_date, product, quantity, price, total, customer)
+    //       VALUES (${date}, ${})
+    //       `
+    //     )
+    //   })
+
+    // } catch (error) {
+    //   console.log(error)
+    // }
     try {
       const dbInvoice = await pool.query(
         `INSERT INTO sales (customer_id, salesperson_id, invoice_date)
         VALUES (${customer.id}, ${salesperson.id}, '${date}') RETURNING id`
       );
       const invoiceId = dbInvoice.rows[0].id;
-
       products.forEach(async (item) => {
         const quantity = parseInt(item.quantity, 10);
         const price = parseFloat(item.price);
@@ -75,12 +89,8 @@ router.post('/invoice', async (req, res) => {
             item.price
           }, ${quantity * price}, ${bulk}, '${frequency.label}' )`
         );
-        // const inventoryForecast = await pool.query(
-        //   `INSERT INTO inventory_forecast (sales_id, sale_date, number_of_filters, filter_id)
-        //     VALUES (${invoiceId}, CURRENT_DATE + INTERVAL '${frequency.monthsUntilNextDelivery} MONTHS', ${quantity}, ${item.product.id} )`
-        // );
         if (frequency.weeksUntilNextDelivery) {
-          for (let i = 0; i < 52; i += frequency.weeksUntilNextDelivery) {
+          for (let i = 0; i < 260; i += frequency.weeksUntilNextDelivery) {
             const forecasts = await pool.query(
               `INSERT INTO forecasts (sale_id, product_id, forecast_date)
                 VALUES (${invoiceId}, ${item.product.id}, CURRENT_DATE + INTERVAL '${i} WEEKS')`
@@ -88,7 +98,7 @@ router.post('/invoice', async (req, res) => {
           }
         }
         if (frequency.monthsUntilNextDelivery) {
-          for (let i = 0; i < 12; i += frequency.monthsUntilNextDelivery) {
+          for (let i = 0; i < 60; i += frequency.monthsUntilNextDelivery) {
             const forecasts = await pool.query(
               `INSERT INTO forecasts (sale_id, product_id, forecast_date)
                 VALUES (${invoiceId}, ${item.product.id}, CURRENT_DATE + INTERVAL '${i} MONTHS')`
@@ -96,16 +106,6 @@ router.post('/invoice', async (req, res) => {
           }
         }
       });
-
-      // for (let i = 0; i < frequency.monthsUntilNextDelivery; i++) {
-      //   const newWeightedSales = await pool.query(
-      //     `INSERT INTO weighted_sales (sales_id, sale_date, weighted_amount)
-      //     VALUES (${invoiceId}, CURRENT_DATE + INTERVAL '${i} MONTHS', ${
-      //       totalPrice / frequency.monthsUntilNextDelivery
-      //     } )`
-      //   );
-      // }
-
       if (frequency.weeksUntilNextDelivery) {
         const newWeightedSales = await pool.query(
           `INSERT INTO weighted_sales (sales_id, sale_date, weighted_amount)
@@ -122,7 +122,6 @@ router.post('/invoice', async (req, res) => {
           );
         }
       }
-
       res.send('Success');
     } catch (error) {
       console.log(error);
@@ -233,6 +232,11 @@ router.get('/forecast', async (req, res) => {
     months.push(weightedSalesMonths.rows[0]);
   }
   res.send([sums, months]);
+});
+
+// Fetching data from the new transactions table
+router.get('/historic', async (req, res) => {
+  const data = await pool.query(`SELECT `);
 });
 
 module.exports = router;
