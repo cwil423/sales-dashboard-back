@@ -1,4 +1,5 @@
 const express = require('express');
+require('dotenv').config();
 const session = require('express-session');
 const { v4: uuidv4 } = require('uuid');
 const bodyParser = require('body-parser');
