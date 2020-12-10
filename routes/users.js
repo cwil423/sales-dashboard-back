@@ -2,6 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const pool = require('../db');
 const bcrypt = require('bcrypt');
+const { userinfo_endpoint_sandbox } = require('intuit-oauth');
 
 const router = express.Router();
 
@@ -24,10 +25,10 @@ router.post('/signup', async (req, res) => {
         );
         res.status(201).send();
       } catch (error) {
-        res.status(400).send();
+        res.status(500).send();
       }
     } else {
-      res.send('User already exists');
+      res.status(400).send('User already exists');
     }
   } catch (error) {
     res.status(500).send(error);
@@ -37,23 +38,24 @@ router.post('/signup', async (req, res) => {
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   try {
-    const passwordFromDatabase = await pool.query(
-      `SELECT password FROM users WHERE email = '${email}'`
+    const user = await pool.query(
+      `SELECT * FROM users WHERE email = '${email}'`
     );
-    console.log('query successful');
     try {
-      if (
-        await bcrypt.compare(password, passwordFromDatabase.rows[0].password)
-      ) {
-        res.status(200).send('Success');
+      if (user.rows[0]) {
+        if (await bcrypt.compare(password, user.rows[0].password)) {
+          res.status(200);
+        } else {
+          res.send('Incorrect email or password');
+        }
       } else {
-        res.status(401).send('Incorrect password');
+        res.send('Incorrect email or password');
       }
     } catch (error) {
-      console.log(error);
+      res.status(500).send();
     }
   } catch (error) {
-    res.status(500).send('really bad');
+    res.status(500).send();
   }
 });
 
