@@ -20,8 +20,8 @@
     "express": "^4.17.1",
     "express-session": "^1.17.1",
     "intuit-oauth": "^3.0.2",
+    "jsonwebtoken": "^8.5.1",
     "mongoose": "^5.10.5",
-    "passport": "^0.4.1",
     "passport-local": "^1.0.0",
     "pg": "^8.3.3",
     "uuid": "^8.3.0"

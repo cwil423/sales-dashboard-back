@@ -1,4 +1,3 @@
-const { environment } = require('intuit-oauth');
 const { Pool } = require('pg');
 
 const pool = new Pool({

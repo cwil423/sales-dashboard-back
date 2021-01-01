@@ -1,8 +1,9 @@
+require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
 const pool = require('../db');
 const bcrypt = require('bcrypt');
-const { userinfo_endpoint_sandbox } = require('intuit-oauth');
+const jwt = require('jsonwebtoken');
 
 const router = express.Router();
 
@@ -28,14 +29,19 @@ router.post('/signup', async (req, res) => {
         res.status(500).send();
       }
     } else {
-      res.status(400).send('User already exists');
+      res.send('User already exists');
     }
   } catch (error) {
     res.status(500).send(error);
   }
 });
 
+// router.post('/token', (req, res) => {
+//   const refreshToken = req.body.token;
+// });
+
 router.post('/login', async (req, res) => {
+  console.log(req.body.email);
   const { email, password } = req.body;
   try {
     const user = await pool.query(
@@ -44,7 +50,19 @@ router.post('/login', async (req, res) => {
     try {
       if (user.rows[0]) {
         if (await bcrypt.compare(password, user.rows[0].password)) {
-          res.status(200);
+          const accessToken = jwt.sign(
+            { email },
+            process.env.ACCESS_TOKEN_SECRET,
+            {
+              expiresIn: '15m',
+            }
+          );
+          const refreshToken = jwt.sign(
+            email,
+            process.env.REFRESH_TOKEN_SECRET
+          );
+
+          res.json({ accessToken, refreshToken });
         } else {
           res.send('Incorrect email or password');
         }
