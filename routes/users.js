@@ -4,6 +4,7 @@ const axios = require('axios');
 const pool = require('../db');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const auth = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -24,6 +25,14 @@ router.post('/signup', async (req, res) => {
           VALUES ($1, $2, $3, $4, $5)`,
           [firstName, lastName, email, hashedPassword, isSalesperson]
         );
+        const accessToken = jwt.sign(
+          { email },
+          process.env.ACCESS_TOKEN_SECRET,
+          {
+            expiresIn: '15m',
+          }
+        );
+        const refreshToken = jwt.sign(email, process.env.REFRESH_TOKEN_SECRET);
         res.status(201).send();
       } catch (error) {
         res.status(500).send();
@@ -41,7 +50,6 @@ router.post('/signup', async (req, res) => {
 // });
 
 router.post('/login', async (req, res) => {
-  console.log(req.body.email);
   const { email, password } = req.body;
   try {
     const user = await pool.query(
@@ -61,7 +69,7 @@ router.post('/login', async (req, res) => {
             email,
             process.env.REFRESH_TOKEN_SECRET
           );
-
+          res.cookie('jwt', accessToken, { httpOnly: true, secure: true });
           res.json({ accessToken, refreshToken });
         } else {
           res.send('Incorrect email or password');
@@ -75,6 +83,13 @@ router.post('/login', async (req, res) => {
   } catch (error) {
     res.status(500).send();
   }
+});
+
+router.get('/user', auth, async (req, res) => {
+  const { email } = req.user;
+  console.log(email);
+  const user = await pool.query(`SELECT * FROM users WHERE email = '${email}'`);
+  res.json(user.rows[0]);
 });
 
 module.exports = router;

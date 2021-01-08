@@ -2,11 +2,12 @@ const express = require('express');
 const axios = require('axios');
 const { format } = require('date-fns');
 const pool = require('../db');
+const auth = require('../middleware/auth');
 
 const router = express.Router();
 
 // Attempts to enter invoice into quickbooks, if this succeeds it enters into postgres.
-router.post('/invoice', async (req, res) => {
+router.post('/invoice', auth, async (req, res) => {
   const { customer, salesperson, products, frequency, bulk } = req.body.invoice;
   const date = format(new Date(), 'yyy/MM/dd');
 
@@ -131,7 +132,7 @@ router.post('/invoice', async (req, res) => {
 });
 
 // Fetches customers, salespeople or products from postgres.
-router.post('/data', async (req, res) => {
+router.post('/data', auth, async (req, res) => {
   try {
     const { type } = req.body;
     let { letters } = req.body;
@@ -155,7 +156,7 @@ router.post('/data', async (req, res) => {
   }
 });
 
-router.get('/weighted', async (req, res) => {
+router.get('/weighted', auth, async (req, res) => {
   const currentYear = format(new Date(), 'yyyy');
   const currentMonth = format(new Date(), 'MM');
   const sums = [];
@@ -201,7 +202,7 @@ router.get('/weighted', async (req, res) => {
   res.send([sums, months, currentSum, currentMonthName]);
 });
 
-router.get('/forecast', async (req, res) => {
+router.get('/forecast', auth, async (req, res) => {
   const currentYear = format(new Date(), 'yyyy');
   const currentMonth = format(new Date(), 'MM');
   const sums = [];
@@ -235,7 +236,7 @@ router.get('/forecast', async (req, res) => {
 });
 
 // Fetching data from the new transactions table
-router.get('/historic', async (req, res) => {
+router.get('/historic', auth, async (req, res) => {
   const data = await pool.query(`SELECT `);
 });
 
