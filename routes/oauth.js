@@ -51,6 +51,9 @@ router.get('/callback', (req, res) => {
   oauthClient
     .createToken(parseRedirect)
     .then(function (authResponse) {
+      res.cookie('accessToken', authResponse.token.access_token, {
+        maxAge: 3600000,
+      });
       AccessToken.updateOne(
         { name: 'accessToken' },
         { value: authResponse.token.access_token }

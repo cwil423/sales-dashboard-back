@@ -1,10 +1,11 @@
 const express = require('express');
 const { format } = require('date-fns');
 const pool = require('../db');
+const auth = require('../middleware/auth');
 
 const router = express.Router();
 
-router.post('/', async (req, res) => {
+router.post('/', auth, async (req, res) => {
   const { month, year } = req.body;
 
   const inventory_forecast = await pool.query(
@@ -18,7 +19,7 @@ router.post('/', async (req, res) => {
   res.send(inventory_forecast.rows);
 });
 
-router.get('/forecast', async (req, res) => {
+router.get('/forecast', auth, async (req, res) => {
   const currentYear = format(new Date(), 'yyyy');
   const currentMonth = format(new Date(), 'MM');
   const sums = [];
@@ -54,7 +55,7 @@ router.get('/forecast', async (req, res) => {
   res.send([sums, months]);
 });
 
-router.post('/enter', (req, res) => {
+router.post('/enter', auth, (req, res) => {
   res.send('yes');
 });
 

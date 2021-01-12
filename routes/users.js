@@ -62,17 +62,20 @@ router.post('/login', async (req, res) => {
             { email },
             process.env.ACCESS_TOKEN_SECRET,
             {
-              expiresIn: '15m',
+              expiresIn: '30m',
             }
           );
           const refreshToken = jwt.sign(
             email,
             process.env.REFRESH_TOKEN_SECRET
           );
-          res.cookie('jwt', accessToken, { httpOnly: true, secure: true });
+          res.cookie('token', accessToken, { maxAge: 3600000 });
+          res.cookie('refresh-token', refreshToken, {
+            maxAge: 3600000,
+          });
           res.json({ accessToken, refreshToken });
         } else {
-          res.send('Incorrect email or password');
+          res.status(400).send('Incorrect email or password');
         }
       } else {
         res.send('Incorrect email or password');
@@ -87,9 +90,18 @@ router.post('/login', async (req, res) => {
 
 router.get('/user', auth, async (req, res) => {
   const { email } = req.user;
-  console.log(email);
   const user = await pool.query(`SELECT * FROM users WHERE email = '${email}'`);
-  res.json(user.rows[0]);
+  const userInfo = user.rows[0];
+  let data = {};
+  data.email = userInfo.email;
+  data.firstName = userInfo.first_name;
+  data.lastName = userInfo.last_name;
+  data.isSalesperson = userInfo.is_salesperson;
+  res.json(data);
+});
+
+router.get('/cookie', (req, res) => {
+  res.send(req.cookies);
 });
 
 module.exports = router;

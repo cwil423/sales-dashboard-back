@@ -4,6 +4,7 @@ const { v4: uuidv4 } = require('uuid');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 const oauthRoute = require('./routes/oauth');
 const quickbooksRoute = require('./routes/quickbooks');
 const salesRoute = require('./routes/sales');
@@ -14,13 +15,14 @@ require('dotenv').config();
 
 const app = express();
 
-app.use(cors());
+app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
 app.use(
   bodyParser.urlencoded({
     extended: true,
   })
 );
 app.use(bodyParser.json());
+app.use(cookieParser());
 app.use(express.json());
 
 app.use('/oauth', express.static('public'));
