@@ -7,7 +7,7 @@ const auth = require('../middleware/auth');
 const router = express.Router();
 
 // Attempts to enter invoice into quickbooks, if this succeeds it enters into postgres.
-router.post('/invoice', auth, async (req, res) => {
+router.post('/invoice', async (req, res) => {
   const { customer, salesperson, products, frequency, bulk } = req.body.invoice;
   const date = format(new Date(), 'yyy/MM/dd');
 
@@ -60,7 +60,6 @@ router.post('/invoice', auth, async (req, res) => {
   //     success = false;
   //   });
   if (success) {
-    console.log(req.body);
     // try {
     //   products.forEach(async (item) => {
     //     const quantity = parseInt(item.quantity, 10);
@@ -84,6 +83,8 @@ router.post('/invoice', auth, async (req, res) => {
       products.forEach(async (item) => {
         const quantity = parseInt(item.quantity, 10);
         const price = parseFloat(item.price);
+        const { saleDate } = item;
+        console.log(item);
         const dbSaleProduct = await pool.query(
           `INSERT INTO sales_products (sales_id, product_id, quantity, price, total, bulk, frequency)
           VALUES (${invoiceId}, ${item.product.id}, ${item.quantity}, ${
@@ -109,8 +110,8 @@ router.post('/invoice', auth, async (req, res) => {
       });
       if (frequency.weeksUntilNextDelivery) {
         const newWeightedSales = await pool.query(
-          `INSERT INTO weighted_sales (sales_id, sale_date, weighted_amount)
-            VALUES (${invoiceId}, CURRENT_DATE, ${
+          `INSERT INTO weighted_sales (sales_id, salesperson_id, sale_date, weighted_amount)
+            VALUES (${invoiceId}, ${salesperson.id}, CURRENT_DATE, ${
             totalPrice / frequency.monthsUntilNextDelivery
           } )`
         );
@@ -118,8 +119,10 @@ router.post('/invoice', auth, async (req, res) => {
       if (frequency.monthsUntilNextDelivery) {
         if ((frequency.monthsUntilNextDelivery = 6 || 12)) {
           const newWeightedSales = await pool.query(
-            `INSERT INTO weighted_sales (sales_id, sale_date, weighted_amount)
-            VALUES (${invoiceId}, CURRENT_DATE, ${totalPrice / 2} )`
+            `INSERT INTO weighted_sales (sales_id, salesperson_id, sale_date, weighted_amount)
+            VALUES (${invoiceId}, ${salesperson.id}, CURRENT_DATE, ${
+              totalPrice / 2
+            } )`
           );
         }
       }
@@ -132,24 +135,29 @@ router.post('/invoice', auth, async (req, res) => {
 });
 
 // Fetches customers, salespeople or products from postgres.
-router.post('/data', auth, async (req, res) => {
+router.post('/data', async (req, res) => {
   try {
     const { type } = req.body;
     let { letters } = req.body;
     letters = letters.charAt(0).toUpperCase();
 
-    let column = null;
-
     if (type === 'products') {
-      column = 'product_name';
+      const data = await pool.query(
+        `SELECT * FROM ${type} WHERE product_name LIKE '${letters}%';`
+      );
+      res.send(data.rows);
+    } else if (type === 'users') {
+      const data = await pool.query(
+        `SELECT id, first_name, last_name FROM ${type} WHERE first_name LIKE '${letters}%';`
+      );
+      console.log(data.rows);
+      res.send(data.rows);
     } else {
-      column = 'first_name';
+      const data = await pool.query(
+        `SELECT * FROM ${type} WHERE first_name LIKE '${letters}%';`
+      );
+      res.send(data.rows);
     }
-
-    const data = await pool.query(
-      `SELECT * FROM ${type} WHERE ${column} LIKE '${letters}%';`
-    );
-    res.send(data.rows);
   } catch (error) {
     console.log(error);
     res.send(error);
@@ -157,6 +165,7 @@ router.post('/data', auth, async (req, res) => {
 });
 
 router.get('/weighted', auth, async (req, res) => {
+  const userEmail = req.user;
   const currentYear = format(new Date(), 'yyyy');
   const currentMonth = format(new Date(), 'MM');
   const sums = [];
@@ -177,13 +186,25 @@ router.get('/weighted', auth, async (req, res) => {
   );
   currentMonthName = currentWeightedMonth.rows[0];
 
+  // for (let i = 0; i < 6; i++) {
+  //   const weightedSales = await pool.query(
+  //     `SELECT SUM (weighted_amount) FROM weighted_sales
+  //     WHERE sale_date >= date '${currentYear}-${currentMonth}-01' - interval '${
+  //       i + 1
+  //     } months'
+  //     AND sale_date < date '${currentYear}-${currentMonth}-01' - interval '${i} months'`
+  //   );
+  //   sums.push(weightedSales.rows[0].sum);
+  // }
+
   for (let i = 0; i < 6; i++) {
     const weightedSales = await pool.query(
-      `SELECT SUM (weighted_amount) FROM weighted_sales 
+      `SELECT SUM (weighted_amount) FROM weighted_sales, users 
       WHERE sale_date >= date '${currentYear}-${currentMonth}-01' - interval '${
         i + 1
       } months' 
-      AND sale_date < date '${currentYear}-${currentMonth}-01' - interval '${i} months'`
+      AND sale_date < date '${currentYear}-${currentMonth}-01' - interval '${i} months'
+      AND salesperson_id = users.id`
     );
     sums.push(weightedSales.rows[0].sum);
   }

@@ -15,7 +15,6 @@ router.post('/', auth, async (req, res) => {
     AND EXTRACT (YEAR FROM sale_date) = ${year}
     GROUP BY product_name`
   );
-  console.log(inventory_forecast.rows);
   res.send(inventory_forecast.rows);
 });
 
@@ -38,7 +37,6 @@ router.get('/forecast', auth, async (req, res) => {
       GROUP BY products.product_name`
     );
     sums.push(forecast.rows);
-    console.log(forecast.rows);
   }
 
   for (let i = 0; i < 6; i++) {
