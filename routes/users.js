@@ -9,7 +9,14 @@ const auth = require('../middleware/auth');
 const router = express.Router();
 
 router.post('/signup', async (req, res) => {
-  const { firstName, lastName, email, password, isSalesperson } = req.body;
+  const {
+    firstName,
+    lastName,
+    email,
+    password,
+    isSalesperson,
+    salaried,
+  } = req.body;
 
   try {
     const checkIfUserExists = await pool.query(
@@ -21,9 +28,9 @@ router.post('/signup', async (req, res) => {
       const hashedPassword = await bcrypt.hash(password, 10);
       try {
         const newUser = await pool.query(
-          `INSERT INTO users (first_name, last_name, email, password, is_salesperson)
-          VALUES ($1, $2, $3, $4, $5)`,
-          [firstName, lastName, email, hashedPassword, isSalesperson]
+          `INSERT INTO users (first_name, last_name, email, password, is_salesperson, salaried)
+          VALUES ($1, $2, $3, $4, $5, $6)`,
+          [firstName, lastName, email, hashedPassword, isSalesperson, salaried]
         );
         const accessToken = jwt.sign(
           { email },
@@ -62,23 +69,23 @@ router.post('/login', async (req, res) => {
             { email },
             process.env.ACCESS_TOKEN_SECRET,
             {
-              expiresIn: '30m',
+              expiresIn: '8h',
             }
           );
-          const refreshToken = jwt.sign(
-            email,
-            process.env.REFRESH_TOKEN_SECRET
-          );
-          res.cookie('token', accessToken, { maxAge: 3600000 });
-          res.cookie('refresh-token', refreshToken, {
-            maxAge: 3600000,
-          });
-          res.json({ accessToken, refreshToken });
+          // const refreshToken = jwt.sign(
+          //   email,
+          //   process.env.REFRESH_TOKEN_SECRET
+          // );
+          res.cookie('token', accessToken, { maxAge: 28800000 });
+          // res.cookie('refresh-token', refreshToken, {
+          //   maxAge: 3600000,
+          // });
+          res.json({ accessToken });
         } else {
           res.status(400).send('Incorrect email or password');
         }
       } else {
-        res.send('Incorrect email or password');
+        res.status(400).send('Incorrect email or password');
       }
     } catch (error) {
       res.status(500).send();

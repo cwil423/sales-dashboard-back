@@ -60,20 +60,6 @@ router.post('/invoice', async (req, res) => {
   //     success = false;
   //   });
   if (success) {
-    // try {
-    //   products.forEach(async (item) => {
-    //     const quantity = parseInt(item.quantity, 10);
-    //     const price = parseFloat(item.price);
-    //     const newTransaction = await pool.query(
-    //       `INSERT INTO transactions (transaction_date, product, quantity, price, total, customer)
-    //       VALUES (${date}, ${})
-    //       `
-    //     )
-    //   })
-
-    // } catch (error) {
-    //   console.log(error)
-    // }
     try {
       const dbInvoice = await pool.query(
         `INSERT INTO sales (customer_id, salesperson_id, invoice_date)
@@ -164,65 +150,6 @@ router.post('/data', async (req, res) => {
   }
 });
 
-router.get('/weighted', auth, async (req, res) => {
-  const userEmail = req.user;
-  const currentYear = format(new Date(), 'yyyy');
-  const currentMonth = format(new Date(), 'MM');
-  const sums = [];
-  const months = [];
-  let currentSum = null;
-  let currentMonthName = null;
-
-  const currentWeightedSales = await pool.query(
-    `SELECT SUM (weighted_amount) FROM weighted_sales
-    WHERE EXTRACT (MONTH FROM sale_date) = ${currentMonth}`
-  );
-  currentSum = currentWeightedSales.rows[0];
-
-  const currentWeightedMonth = await pool.query(
-    `SELECT TO_CHAR(sale_date, 'Month') AS "Month" FROM weighted_sales
-    WHERE EXTRACT (MONTH FROM sale_date) = ${currentMonth}
-    LIMIT 1`
-  );
-  currentMonthName = currentWeightedMonth.rows[0];
-
-  // for (let i = 0; i < 6; i++) {
-  //   const weightedSales = await pool.query(
-  //     `SELECT SUM (weighted_amount) FROM weighted_sales
-  //     WHERE sale_date >= date '${currentYear}-${currentMonth}-01' - interval '${
-  //       i + 1
-  //     } months'
-  //     AND sale_date < date '${currentYear}-${currentMonth}-01' - interval '${i} months'`
-  //   );
-  //   sums.push(weightedSales.rows[0].sum);
-  // }
-
-  for (let i = 0; i < 6; i++) {
-    const weightedSales = await pool.query(
-      `SELECT SUM (weighted_amount) FROM weighted_sales, users 
-      WHERE sale_date >= date '${currentYear}-${currentMonth}-01' - interval '${
-        i + 1
-      } months' 
-      AND sale_date < date '${currentYear}-${currentMonth}-01' - interval '${i} months'
-      AND salesperson_id = users.id`
-    );
-    sums.push(weightedSales.rows[0].sum);
-  }
-
-  for (let i = 0; i < 6; i++) {
-    const weightedSalesMonths = await pool.query(
-      `SELECT TO_CHAR(sale_date, 'Month') AS "Month" FROM weighted_sales
-      WHERE sale_date >= date '${currentYear}-${currentMonth}-01' - interval '${
-        i + 1
-      } months' 
-      AND sale_date < date '${currentYear}-${currentMonth}-01' - interval '${i} months' 
-      LIMIT 1`
-    );
-    months.push(weightedSalesMonths.rows[0]);
-  }
-  res.send([sums, months, currentSum, currentMonthName]);
-});
-
 router.get('/forecast', auth, async (req, res) => {
   const currentYear = format(new Date(), 'yyyy');
   const currentMonth = format(new Date(), 'MM');
@@ -256,9 +183,13 @@ router.get('/forecast', auth, async (req, res) => {
   res.send([sums, months]);
 });
 
-// Fetching data from the new transactions table
-router.get('/historic', auth, async (req, res) => {
-  const data = await pool.query(`SELECT `);
+router.get('/income', async (req, res) => {
+  const income = await pool.query(
+    `SELECT SUM(total) FROM sales_products, sales
+    WHERE invoice_date < CURRENT_DATE
+    AND invoice_date > CURRENT_DATE - interval '1 year'`
+  );
+  res.send(income.rows[0]);
 });
 
 module.exports = router;

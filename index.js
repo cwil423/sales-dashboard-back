@@ -10,6 +10,7 @@ const quickbooksRoute = require('./routes/quickbooks');
 const salesRoute = require('./routes/sales');
 const inventoryRoute = require('./routes/inventory');
 const usersRoute = require('./routes/users');
+const commissonRoute = require('./routes/commission');
 
 require('dotenv').config();
 
@@ -30,6 +31,7 @@ app.use('/oauth', oauthRoute);
 app.use('/quickbooks', quickbooksRoute);
 app.use('/sales', salesRoute);
 app.use('/inventory', inventoryRoute);
+app.use('/commission', commissonRoute);
 app.use('/users', usersRoute);
 
 app.get('/', (req, res) => {
