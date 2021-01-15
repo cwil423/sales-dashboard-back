@@ -8,7 +8,9 @@ const router = express.Router();
 
 // Attempts to enter invoice into quickbooks, if this succeeds it enters into postgres.
 router.post('/invoice', async (req, res) => {
-  const { customer, salesperson, products, frequency, bulk } = req.body.invoice;
+  const { customer, products, frequency, bulk } = req.body.invoice;
+  const salesperson = req.body.user;
+  console.log(req.body);
   const date = format(new Date(), 'yyy/MM/dd');
 
   let totalPrice = 0;
@@ -77,22 +79,6 @@ router.post('/invoice', async (req, res) => {
             item.price
           }, ${quantity * price}, ${bulk}, '${frequency.label}' )`
         );
-        if (frequency.weeksUntilNextDelivery) {
-          for (let i = 0; i < 260; i += frequency.weeksUntilNextDelivery) {
-            const forecasts = await pool.query(
-              `INSERT INTO forecasts (sale_id, product_id, forecast_date)
-                VALUES (${invoiceId}, ${item.product.id}, CURRENT_DATE + INTERVAL '${i} WEEKS')`
-            );
-          }
-        }
-        if (frequency.monthsUntilNextDelivery) {
-          for (let i = 0; i < 60; i += frequency.monthsUntilNextDelivery) {
-            const forecasts = await pool.query(
-              `INSERT INTO forecasts (sale_id, product_id, forecast_date)
-                VALUES (${invoiceId}, ${item.product.id}, CURRENT_DATE + INTERVAL '${i} MONTHS')`
-            );
-          }
-        }
       });
       if (frequency.weeksUntilNextDelivery) {
         const newWeightedSales = await pool.query(
@@ -103,11 +89,11 @@ router.post('/invoice', async (req, res) => {
         );
       }
       if (frequency.monthsUntilNextDelivery) {
-        if ((frequency.monthsUntilNextDelivery = 6 || 12)) {
+        if (frequency.monthsUntilNextDelivery) {
           const newWeightedSales = await pool.query(
             `INSERT INTO weighted_sales (sales_id, salesperson_id, sale_date, weighted_amount)
             VALUES (${invoiceId}, ${salesperson.id}, CURRENT_DATE, ${
-              totalPrice / 2
+              totalPrice / frequency.monthsUntilNextDelivery
             } )`
           );
         }

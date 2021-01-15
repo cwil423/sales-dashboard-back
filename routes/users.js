@@ -100,6 +100,7 @@ router.get('/user', auth, async (req, res) => {
   const user = await pool.query(`SELECT * FROM users WHERE email = '${email}'`);
   const userInfo = user.rows[0];
   let data = {};
+  data.id = userInfo.id;
   data.email = userInfo.email;
   data.firstName = userInfo.first_name;
   data.lastName = userInfo.last_name;
